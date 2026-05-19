@@ -8,7 +8,7 @@
     <div class="max-w-[78%] space-y-1">
       <!-- Photo -->
       <div v-if="msg.type === 'photo'" class="rounded-2xl overflow-hidden">
-        <img :src="msg.content" class="max-w-xs rounded-2xl object-cover" />
+        <img :src="photoSrc" class="max-w-xs rounded-2xl object-cover" />
       </div>
 
       <!-- Analyse -->
@@ -57,9 +57,14 @@
 import { computed } from 'vue'
 import type { ChatMessage } from '@/stores/chat'
 import AnalysisResult from '@/components/agent/AnalysisResult.vue'
+import { apiUrl } from '@/composables/useApi'
 
 const props = defineProps<{ msg: ChatMessage; answered?: boolean }>()
 defineEmits<{ (e: 'button-click', value: string): void }>()
 
 const time = computed(() => new Date(props.msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
+
+const photoSrc = computed(() =>
+  props.msg.content.startsWith('/api/') ? apiUrl(props.msg.content) : props.msg.content
+)
 </script>

@@ -6,6 +6,39 @@ import { getPhotoUrl } from '../storage/photos'
 
 export const entriesRouter = Router()
 
+// GET /api/entries/calendar?year=YYYY&month=MM
+entriesRouter.get('/calendar', async (req: Request, res: Response) => {
+  const year = parseInt(req.query.year as string) || new Date().getFullYear()
+  const month = parseInt(req.query.month as string) || (new Date().getMonth() + 1)
+  const from = `${year}-${String(month).padStart(2, '0')}-01`
+  const lastDay = new Date(year, month, 0).getDate()
+  const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+  const rows = await db.query.entries.findMany({
+    where: and(gte(entries.date, from), lte(entries.date, to)),
+    orderBy: [desc(entries.date)],
+  })
+
+  const enriched = await Promise.all(rows.map(async entry => {
+    const analysis = await db.query.skinAnalyses.findFirst({ where: eq(skinAnalyses.entryId, entry.id) })
+    const photoUrl = entry.photoPath ? await getPhotoUrl(entry.photoPath) : null
+    return {
+      id: entry.id,
+      date: entry.date,
+      photoUrl,
+      analysis: analysis ? {
+        glassSkinScore: analysis.glassSkinScore,
+        summary: analysis.summary,
+        vsYesterday: analysis.vsYesterday,
+        routineForTonight: JSON.parse(analysis.routineForTonight ?? '[]') as string[],
+        rosaceaScore: analysis.rosaceaScore,
+      } : null,
+    }
+  }))
+
+  res.json(enriched)
+})
+
 // GET /api/entries — liste paginée
 entriesRouter.get('/', async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100)

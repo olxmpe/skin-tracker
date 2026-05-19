@@ -91,7 +91,7 @@ export const useChatStore = defineStore('chat', () => {
           if (evt.type === 'error') {
             messages.value.push({
               id: Date.now(), role: 'assistant', type: 'text',
-              content: evt.text ?? 'Erreur du Skin Guru. Réessaie.',
+              content: evt.text ?? 'Erreur du Skin Guru. Réessayez.',
               buttons: [], createdAt: new Date().toISOString(), pending: false,
             })
           }

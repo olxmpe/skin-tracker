@@ -23,7 +23,8 @@ const $route = useRoute()
 const items = [
   { to: '/chat', icon: '✦', label: 'Chat' },
   { to: '/dashboard', icon: '◈', label: 'Dashboard' },
-  { to: '/timeline', icon: '◷', label: 'Historique' },
+  { to: '/timeline', icon: '▦', label: 'Calendrier' },
+  { to: '/products', icon: '◉', label: 'Produits' },
   { to: '/settings', icon: '◎', label: 'Profil' },
 ]
 </script>

@@ -13,6 +13,12 @@
       </button>
     </div>
 
+    <!-- Quota banner -->
+    <div v-if="quotaExhausted" class="flex-shrink-0 bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2 text-xs text-amber-800">
+      <span>⚠️</span>
+      <span>Quota Gemini épuisé — l'IA ne peut pas répondre pour l'instant. Réessayez demain.</span>
+    </div>
+
     <!-- Messages -->
     <div ref="scrollEl" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-2">
       <!-- Message de bienvenue -->
@@ -100,8 +106,10 @@
 import { ref, onMounted, nextTick, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import MessageBubble from '@/components/chat/MessageBubble.vue'
+import { apiFetch } from '@/composables/useApi'
 
 const chatStore = useChatStore()
+const quotaExhausted = ref(false)
 const scrollEl = ref<HTMLElement>()
 const bottomEl = ref<HTMLElement>()
 const inputText = ref('')
@@ -186,7 +194,11 @@ function autoResize(e: Event) {
 }
 
 onMounted(async () => {
-  await chatStore.loadHistory()
+  const [_, health] = await Promise.all([
+    chatStore.loadHistory(),
+    apiFetch('/api/chat/health').then(r => r.json()).catch(() => ({ ok: true })),
+  ])
+  quotaExhausted.value = !(health as { ok: boolean }).ok
   scrollToBottom()
 })
 </script>

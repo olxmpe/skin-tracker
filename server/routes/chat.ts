@@ -87,7 +87,7 @@ chatRouter.post('/message', upload.single('file'), async (req: Request, res: Res
       }).where(eq(chatSession.id, session.id))
 
       const guruMsg = await addMessage('assistant', 'text',
-        'Photo reçue ✦ Maintenant dis-moi comment tu te sens — un vocal ou quelques mots : routine du jour, ce que t\'as mangé, ton sommeil, ton niveau de stress...'
+        'Photo reçue ✦ Dites-moi maintenant comment vous vous sentez — un message vocal ou quelques mots : routine du jour, ce que vous avez mangé, votre sommeil, votre niveau de stress...'
       )
       sseWrite(res, { type: 'message', message: { ...guruMsg, buttons: [] } })
       sseWrite(res, { type: 'done' })
@@ -99,14 +99,19 @@ chatRouter.post('/message', upload.single('file'), async (req: Request, res: Res
       let transcript = text ?? ''
 
       if (type === 'audio' && req.file) {
-        const model = getModel({ model: 'gemini-2.0-flash', maxTokens: 512 })
-        const result = await model.generateContent([
-          'Transcris ce message vocal en français. Uniquement la transcription, sans commentaire.',
-          { inlineData: { mimeType: 'audio/webm', data: req.file.buffer.toString('base64') } },
-        ])
-        transcript = result.response.text().trim()
-        await addMessage('user', 'audio', transcript)
-        sseWrite(res, { type: 'transcript', text: transcript })
+        try {
+          const model = getModel({ model: 'gemini-2.0-flash', maxTokens: 512 })
+          const result = await model.generateContent([
+            'Transcris ce message vocal en français. Uniquement la transcription, sans commentaire.',
+            { inlineData: { mimeType: 'audio/webm', data: req.file.buffer.toString('base64') } },
+          ])
+          transcript = result.response.text().trim()
+        } catch {
+          transcript = ''
+        }
+        const displayText = transcript || '🎙 Message vocal'
+        await addMessage('user', 'audio', displayText)
+        sseWrite(res, { type: 'transcript', text: displayText })
       } else {
         await addMessage('user', 'text', transcript)
       }
@@ -310,10 +315,31 @@ chatRouter.post('/message', upload.single('file'), async (req: Request, res: Res
 
     sseWrite(res, { type: 'error', text: 'Type de message non reconnu.' })
     res.end()
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Chat error:', err)
-    sseWrite(res, { type: 'error', text: 'Erreur du Skin Guru. Réessaie.' })
+    const msg = err instanceof Error ? err.message : String(err)
+    const isQuota = msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('resource exhausted')
+    sseWrite(res, {
+      type: 'error',
+      code: isQuota ? 'quota' : 'generic',
+      text: isQuota
+        ? 'Quota Gemini épuisé. Réessayez demain ou vérifiez votre clé API.'
+        : 'Erreur du Skin Guru. Réessayez.',
+    })
     res.end()
+  }
+})
+
+// ── GET /api/chat/health ──────────────────────────────────────────────────────
+chatRouter.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const model = getModel({ maxTokens: 4 })
+    await model.generateContent('ok')
+    res.json({ ok: true })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    const isQuota = msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('resource exhausted')
+    res.json({ ok: false, quota: isQuota })
   }
 })
 
