@@ -79,8 +79,8 @@ export function broadcastWS(event: string, data: unknown) {
 // ── Démarrage ─────────────────────────────────────────────────────────────────
 migrate(db, { migrationsFolder: path.resolve(process.cwd(), 'server/db/migrations') })
 
-server.listen(PORT, () => {
-  console.log(`✓ SkinTracker backend → http://localhost:${PORT}`)
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✓ SkinTracker backend → http://0.0.0.0:${PORT}`)
   startWeeklyReportCron()
 })
 
