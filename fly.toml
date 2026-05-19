@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for skin-tracker on 2026-05-19T21:38:11+02:00
+# fly.toml app configuration file generated for skin-tracker-delicate-feather-6504 on 2026-05-19T19:45:53Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'skin-tracker'
+app = 'skin-tracker-delicate-feather-6504'
 primary_region = 'cdg'
 
 [build]
@@ -16,7 +16,7 @@ primary_region = 'cdg'
   auto_extend_size_limit = '10GB'
 
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
@@ -25,5 +25,6 @@ primary_region = 'cdg'
 
 [[vm]]
   memory = '1gb'
+  cpu_kind = 'shared'
   cpus = 1
   memory_mb = 1024
