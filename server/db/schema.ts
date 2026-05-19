@@ -11,6 +11,7 @@ export const userProfile = sqliteTable('user_profile', {
   carbsGoalG: real('carbs_goal_g'),
   fatGoalG: real('fat_goal_g'),
   caloriesGoal: integer('calories_goal'),
+  sex: text('sex', { enum: ['female', 'male'] }).default('female'),
   activityLevel: text('activity_level', { enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'] }).default('moderate'),
   skinConditions: text('skin_conditions').default('[]'),   // JSON string[]
   cycleLength: integer('cycle_length').default(28),

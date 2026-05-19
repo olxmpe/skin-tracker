@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-screen bg-stone-50">
+  <div class="flex flex-col bg-stone-50" style="height: calc(100dvh - 3.5rem)">
 
     <!-- Header -->
     <div class="flex-shrink-0 bg-white border-b border-stone-100 px-4 py-3 flex items-center gap-3">

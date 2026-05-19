@@ -20,6 +20,9 @@ import { reportsRouter } from './routes/reports'
 import { evolutionRouter } from './routes/evolution'
 import { whatsappRouter } from './routes/whatsapp-webhook'
 import { startWeeklyReportCron } from './jobs/weekly-report'
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import { db } from './db/client'
+import path from 'path'
 
 const app = express()
 const server = createServer(app)
@@ -75,9 +78,10 @@ export function broadcastWS(event: string, data: unknown) {
 }
 
 // ── Démarrage ─────────────────────────────────────────────────────────────────
+migrate(db, { migrationsFolder: path.resolve(process.cwd(), 'server/db/migrations') })
+
 server.listen(PORT, () => {
   console.log(`✓ SkinTracker backend → http://localhost:${PORT}`)
-
   startWeeklyReportCron()
 })
 
