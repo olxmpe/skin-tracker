@@ -7,8 +7,17 @@ export function useWebSocket(onMessage: (evt: WSEvent) => void) {
   const connected = ref(false)
 
   function connect() {
-    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    ws.value = new WebSocket(`${protocol}//${location.host}/ws`)
+    const apiUrl = import.meta.env.VITE_API_URL as string | undefined
+    let wsUrl: string
+
+    if (apiUrl) {
+      wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws'
+    } else {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+      wsUrl = `${protocol}//${location.host}/ws`
+    }
+
+    ws.value = new WebSocket(wsUrl)
 
     ws.value.onopen = () => { connected.value = true }
     ws.value.onclose = () => {

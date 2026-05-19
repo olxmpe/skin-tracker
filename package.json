@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -n fe,be -c cyan,yellow \"vite\" \"tsx watch server/index.ts\"",
-    "build": "vite build && tsc -p tsconfig.node.json --noEmit",
+    "build": "vite build && tsc -p tsconfig.node.json",
     "build:frontend": "vite build",
     "preview": "vite preview",
     "db:generate": "drizzle-kit generate",
