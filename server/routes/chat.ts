@@ -49,9 +49,11 @@ async function getOrCreateSession() {
 
 // ── GET /api/chat/history ─────────────────────────────────────────────────────
 chatRouter.get('/history', async (_req: Request, res: Response) => {
+  const todayStart = format(new Date(), 'yyyy-MM-dd') + ' 00:00:00'
   const messages = await db.query.chatMessages.findMany({
+    where: gte(chatMessages.createdAt, todayStart),
     orderBy: [desc(chatMessages.id)],
-    limit: 50,
+    limit: 100,
   })
   res.json(messages.reverse().map(m => ({
     ...m,
@@ -273,8 +275,13 @@ chatRouter.post('/message', upload.single('file'), async (req: Request, res: Res
       // ── Pas de photo en attente → conversation libre ─────────────────────────
       sseWrite(res, { type: 'status', text: 'Skin Guru répond...' })
 
+      const todayStart = format(new Date(), 'yyyy-MM-dd') + ' 00:00:00'
       const [history, freeChatProfile] = await Promise.all([
-        db.query.chatMessages.findMany({ orderBy: [desc(chatMessages.id)], limit: 10 }),
+        db.query.chatMessages.findMany({
+          where: gte(chatMessages.createdAt, todayStart),
+          orderBy: [desc(chatMessages.id)],
+          limit: 20,
+        }),
         db.query.userProfile.findFirst(),
       ])
 
