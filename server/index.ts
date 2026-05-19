@@ -21,6 +21,7 @@ import { evolutionRouter } from './routes/evolution'
 import { whatsappRouter } from './routes/whatsapp-webhook'
 import { importRouter } from './routes/import'
 import { startWeeklyReportCron } from './jobs/weekly-report'
+import { authMiddleware } from './middleware/auth'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { db } from './db/client'
 
@@ -39,6 +40,9 @@ app.use('/webhook/whatsapp', express.raw({ type: 'application/json' }), (req, _r
   }
   next()
 })
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+app.use('/api', authMiddleware)
 
 // ── Routes API ────────────────────────────────────────────────────────────────
 app.use('/api/checkin', checkinRouter)
@@ -66,7 +70,13 @@ app.use('/api/photos', express.static(localPhotoDir))
 const wss = new WebSocketServer({ server, path: '/ws' })
 const wsClients = new Set<WebSocket>()
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  const url = new URL(req.url ?? '', 'http://localhost')
+  const token = url.searchParams.get('token')
+  if (process.env.APP_PASSWORD && token !== process.env.APP_PASSWORD) {
+    ws.close(4001, 'Non autorisé')
+    return
+  }
   wsClients.add(ws)
   ws.on('close', () => wsClients.delete(ws))
 })

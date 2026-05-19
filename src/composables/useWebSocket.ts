@@ -1,4 +1,5 @@
 import { ref, onUnmounted } from 'vue'
+import { getStoredToken } from './useApi'
 
 type WSEvent = { event: string; data: unknown; ts: number }
 
@@ -17,6 +18,8 @@ export function useWebSocket(onMessage: (evt: WSEvent) => void) {
       wsUrl = `${protocol}//${location.host}/ws`
     }
 
+    const token = getStoredToken()
+    if (token) wsUrl += `?token=${encodeURIComponent(token)}`
     ws.value = new WebSocket(wsUrl)
 
     ws.value.onopen = () => { connected.value = true }

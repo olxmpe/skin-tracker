@@ -21,12 +21,11 @@
 
     <!-- Messages -->
     <div ref="scrollEl" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-2">
-      <!-- Message de bienvenue -->
       <div v-if="chatStore.messages.length === 0" class="text-center py-12 space-y-2">
         <div class="w-16 h-16 rounded-full bg-skin-100 flex items-center justify-center text-3xl mx-auto">✦</div>
         <p class="text-base font-semibold text-stone-700">Skin Guru</p>
         <p class="text-sm text-stone-400 max-w-xs mx-auto leading-relaxed">
-          Envoie ta photo du jour pour commencer ton check-in, ou pose-moi n'importe quelle question sur ta peau.
+          Envoyez votre photo du jour pour commencer votre check-in, ou posez n'importe quelle question sur votre peau.
         </p>
       </div>
 
@@ -57,7 +56,7 @@
       <div v-if="pendingPhoto" class="mb-2 relative inline-block">
         <img :src="pendingPhotoUrl!" class="h-16 w-16 rounded-xl object-cover" />
         <button
-          @click="pendingPhoto = null"
+          @click="pendingPhoto = null; pendingPhotoUrl = null"
           class="absolute -top-1.5 -right-1.5 bg-stone-700 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center"
         >✕</button>
       </div>
@@ -69,23 +68,14 @@
           <input type="file" accept="image/*" capture="user" class="hidden" @change="handlePhotoSelect" />
         </label>
 
-        <!-- Voice -->
-        <button
-          @click="toggleRecord"
-          class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-          :class="recording ? 'bg-red-500 text-white animate-pulse' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'"
-        >
-          <span class="text-base">🎙</span>
-        </button>
-
         <!-- Text input -->
         <textarea
           v-model="inputText"
-          :placeholder="recording ? `Enregistrement... ${elapsed}s` : 'Écrire au Skin Guru...'"
-          :disabled="recording || chatStore.sending"
+          placeholder="Écrire au Skin Guru..."
+          :disabled="chatStore.sending"
           rows="1"
           class="flex-1 bg-stone-100 rounded-2xl px-4 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-skin-200 max-h-28 disabled:opacity-50"
-          @keydown.enter.exact.prevent="sendText"
+          @keydown.enter.exact.prevent="pendingPhoto ? sendPhoto() : sendText()"
           @input="autoResize"
         />
 
@@ -115,11 +105,6 @@ const bottomEl = ref<HTMLElement>()
 const inputText = ref('')
 const pendingPhoto = ref<File | null>(null)
 const pendingPhotoUrl = ref<string | null>(null)
-const recording = ref(false)
-const elapsed = ref(0)
-let mediaRecorder: MediaRecorder | null = null
-let audioChunks: Blob[] = []
-let timer: ReturnType<typeof setInterval> | null = null
 
 function scrollToBottom() {
   nextTick(() => bottomEl.value?.scrollIntoView({ behavior: 'smooth' }))
@@ -150,33 +135,6 @@ async function sendText() {
   await chatStore.sendMessage({ type: 'text', text })
 }
 
-async function toggleRecord() {
-  if (recording.value) {
-    mediaRecorder?.stop()
-    recording.value = false
-    if (timer) clearInterval(timer)
-    return
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    mediaRecorder = new MediaRecorder(stream)
-    audioChunks = []
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data)
-    mediaRecorder.onstop = async () => {
-      stream.getTracks().forEach(t => t.stop())
-      const blob = new Blob(audioChunks, { type: 'audio/webm' })
-      const file = new File([blob], 'voice.webm', { type: 'audio/webm' })
-      await chatStore.sendMessage({ type: 'audio', file })
-    }
-    mediaRecorder.start()
-    recording.value = true
-    elapsed.value = 0
-    timer = setInterval(() => elapsed.value++, 1000)
-  } catch {
-    alert('Micro non disponible')
-  }
-}
-
 function handleButtonClick(value: string) {
   chatStore.sendMessage({ type: 'button', buttonValue: value })
 }
@@ -194,7 +152,7 @@ function autoResize(e: Event) {
 }
 
 onMounted(async () => {
-  const [_, health] = await Promise.all([
+  const [, health] = await Promise.all([
     chatStore.loadHistory(),
     apiFetch('/api/chat/health').then(r => r.json()).catch(() => ({ ok: true })),
   ])
