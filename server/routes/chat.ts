@@ -278,10 +278,13 @@ chatRouter.post('/message', upload.single('file'), async (req: Request, res: Res
         : SKIN_GURU_PERSONA
 
       const model = getModel({ systemInstruction, maxTokens: 512 })
-      const chatHistory = history.reverse().slice(-8).map(m => ({
-        role: m.role as 'user' | 'model',
+      const rawHistory = history.reverse().slice(-8).map(m => ({
+        role: (m.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
         parts: [{ text: m.content }],
       }))
+      // Gemini requires history to start with a 'user' turn
+      const firstUserIdx = rawHistory.findIndex(m => m.role === 'user')
+      const chatHistory = firstUserIdx > 0 ? rawHistory.slice(firstUserIdx) : rawHistory
 
       const chat = model.startChat({ history: chatHistory.slice(0, -1) })
       const result = await chat.sendMessage(transcript)
