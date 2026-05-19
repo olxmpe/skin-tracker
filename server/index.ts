@@ -22,7 +22,6 @@ import { whatsappRouter } from './routes/whatsapp-webhook'
 import { startWeeklyReportCron } from './jobs/weekly-report'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { db } from './db/client'
-import path from 'path'
 
 const app = express()
 const server = createServer(app)
