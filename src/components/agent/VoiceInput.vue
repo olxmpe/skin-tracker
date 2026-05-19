@@ -42,6 +42,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
+import { apiFetch } from '@/composables/useApi'
 
 const props = defineProps<{ modelValue: string | null }>()
 const emit = defineEmits<{ (e: 'update:modelValue', v: string | null): void }>()
@@ -88,7 +89,7 @@ async function transcribeBlob(blob: Blob) {
   const formData = new FormData()
   formData.append('audio', blob, 'voice.webm')
   try {
-    const res = await fetch('/api/checkin/transcribe', { method: 'POST', body: formData })
+    const res = await apiFetch('/api/checkin/transcribe', { method: 'POST', body: formData })
     const { text } = await res.json() as { text: string }
     transcript.value = text
     emit('update:modelValue', text)

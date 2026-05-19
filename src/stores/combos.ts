@@ -29,7 +29,7 @@ export const useCombosStore = defineStore('combos', () => {
   }
 
   async function remove(id: number) {
-    await fetch(`/api/combos/${id}`, { method: 'DELETE' })
+    await apiFetch(`/api/combos/${id}`, { method: 'DELETE' })
     routineCombos.value = routineCombos.value.filter(c => c.id !== id)
     mealCombos.value = mealCombos.value.filter(c => c.id !== id)
   }

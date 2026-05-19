@@ -33,6 +33,7 @@ import { ref, onMounted } from 'vue'
 import type { Entry } from '@/types'
 import EntryCard from '@/components/timeline/EntryCard.vue'
 import PhotoComparator from '@/components/timeline/PhotoComparator.vue'
+import { apiFetch } from '@/composables/useApi'
 
 const entries = ref<Entry[]>([])
 const loading = ref(false)
@@ -42,7 +43,7 @@ const page = ref(1)
 const PAGE_SIZE = 20
 
 async function fetchEntries(p: number) {
-  const res = await fetch(`/api/entries?page=${p}&limit=${PAGE_SIZE}`)
+  const res = await apiFetch(`/api/entries?page=${p}&limit=${PAGE_SIZE}`)
   const data = await res.json() as { entries: Entry[]; total: number }
   return data
 }
