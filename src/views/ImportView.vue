@@ -4,7 +4,37 @@
       <div class="mb-2">
         <p class="text-xs text-stone-400 uppercase tracking-widest">Import</p>
         <h1 class="text-2xl font-bold text-stone-800">Importer des données</h1>
-        <p class="text-xs text-stone-400 mt-1">Photos, journaux, exports CSV</p>
+        <p class="text-xs text-stone-400 mt-1">Photos, journaux, exports ChatGPT</p>
+      </div>
+
+      <!-- ChatGPT history import -->
+      <div class="bg-white rounded-3xl border border-stone-100 p-4">
+        <p class="text-sm font-semibold text-stone-700 mb-1">Historique ChatGPT</p>
+        <p class="text-xs text-stone-400 mb-3">
+          Importe ton historique de conversations peau depuis ChatGPT Exporter
+          (fichier JSON). Les messages seront ajoutés à ton historique de chat
+          et ton profil pré-rempli.
+        </p>
+        <label class="btn-secondary flex items-center justify-center gap-2 py-3 cursor-pointer text-sm">
+          <span>💬</span> Choisir le fichier JSON
+          <input
+            type="file"
+            accept=".json"
+            class="hidden"
+            :disabled="importing"
+            @change="handleChatGPTImport"
+          />
+        </label>
+        <div v-if="chatgptFile" class="mt-3 space-y-2">
+          <p class="text-xs text-stone-500">{{ chatgptFile.name }}</p>
+          <button
+            @click="uploadChatGPT"
+            :disabled="importing"
+            class="btn-primary w-full py-2 text-sm"
+          >
+            {{ importing ? 'Import en cours…' : 'Importer' }}
+          </button>
+        </div>
       </div>
 
       <!-- Bulk photo import -->
@@ -49,9 +79,39 @@ import { ref } from 'vue'
 import { apiFetch } from '@/composables/useApi'
 
 const photoQueue = ref<File[]>([])
+const chatgptFile = ref<File | null>(null)
 const importing = ref(false)
 const importProgress = ref(0)
 const results = ref<{ ok: boolean; message: string }[]>([])
+
+function handleChatGPTImport(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) chatgptFile.value = file
+}
+
+async function uploadChatGPT() {
+  if (!chatgptFile.value) return
+  importing.value = true
+  results.value = []
+
+  const fd = new FormData()
+  fd.append('file', chatgptFile.value)
+
+  try {
+    const res = await apiFetch('/api/import/chatgpt', { method: 'POST', body: fd })
+    const data = await res.json() as { imported?: number; error?: string }
+    if (res.ok && data.imported != null) {
+      results.value = [{ ok: true, message: `${data.imported} messages importés. Profil pré-rempli.` }]
+      chatgptFile.value = null
+    } else {
+      results.value = [{ ok: false, message: data.error ?? 'Erreur inconnue' }]
+    }
+  } catch {
+    results.value = [{ ok: false, message: 'Erreur réseau' }]
+  }
+
+  importing.value = false
+}
 
 function handlePhotoImport(e: Event) {
   const files = (e.target as HTMLInputElement).files

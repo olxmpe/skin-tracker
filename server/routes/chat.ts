@@ -268,11 +268,16 @@ chatRouter.post('/message', upload.single('file'), async (req: Request, res: Res
       // ── Pas de photo en attente → conversation libre ─────────────────────────
       sseWrite(res, { type: 'status', text: 'Skin Guru répond...' })
 
-      const history = await db.query.chatMessages.findMany({
-        orderBy: [desc(chatMessages.id)], limit: 10,
-      })
+      const [history, freeChatProfile] = await Promise.all([
+        db.query.chatMessages.findMany({ orderBy: [desc(chatMessages.id)], limit: 10 }),
+        db.query.userProfile.findFirst(),
+      ])
 
-      const model = getModel({ systemInstruction: SKIN_GURU_PERSONA, maxTokens: 512 })
+      const systemInstruction = freeChatProfile?.backgroundContext
+        ? `${SKIN_GURU_PERSONA}\n\n${freeChatProfile.backgroundContext}`
+        : SKIN_GURU_PERSONA
+
+      const model = getModel({ systemInstruction, maxTokens: 512 })
       const chatHistory = history.reverse().slice(-8).map(m => ({
         role: m.role as 'user' | 'model',
         parts: [{ text: m.content }],

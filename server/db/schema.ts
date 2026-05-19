@@ -14,6 +14,7 @@ export const userProfile = sqliteTable('user_profile', {
   sex: text('sex', { enum: ['female', 'male'] }).default('female'),
   activityLevel: text('activity_level', { enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'] }).default('moderate'),
   skinConditions: text('skin_conditions').default('[]'),   // JSON string[]
+  backgroundContext: text('background_context'),            // contexte historique importé
   cycleLength: integer('cycle_length').default(28),
   lastPeriodDate: text('last_period_date'),
   lastAppleHealthSync: text('last_apple_health_sync'),

@@ -28,7 +28,7 @@ export const useAnalysisStore = defineStore('analysis', () => {
   }
 
   async function fetchOverview(period = '30d') {
-    const res = await fetch(`/api/analytics/overview?period=${period}`)
+    const res = await apiFetch(`/api/analytics/overview?period=${period}`)
     overview.value = await res.json() as AnalyticsOverview
   }
 

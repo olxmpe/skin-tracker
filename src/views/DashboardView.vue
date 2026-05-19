@@ -74,6 +74,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysis'
+import { apiFetch } from '@/composables/useApi'
 import type { Correlation } from '@/types'
 import GlassSkinChart from '@/components/dashboard/GlassSkinChart.vue'
 import DimensionsRadar from '@/components/dashboard/DimensionsRadar.vue'
@@ -121,7 +122,7 @@ async function load() {
   loading.value = true
   await analysisStore.fetchOverview(period.value)
   try {
-    const res = await fetch(`/api/analytics/correlations?period=${period.value}`)
+    const res = await apiFetch(`/api/analytics/correlations?period=${period.value}`)
     correlations.value = await res.json() as Correlation[]
   } catch { correlations.value = [] }
   loading.value = false

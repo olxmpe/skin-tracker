@@ -82,12 +82,18 @@ export const useChatStore = defineStore('chat', () => {
           }
           if (evt.type === 'status') statusText.value = evt.text ?? ''
           if (evt.type === 'transcript') {
-            // Replace pending audio bubble content
-            const last = messages.value.findLast(m => m.pending && m.role === 'user')
+            const last = [...messages.value].reverse().find(m => m.pending && m.role === 'user')
             if (last) last.content = evt.text ?? ''
           }
           if (evt.type === 'message' && evt.message) {
             messages.value.push({ ...evt.message, pending: false })
+          }
+          if (evt.type === 'error') {
+            messages.value.push({
+              id: Date.now(), role: 'assistant', type: 'text',
+              content: evt.text ?? 'Erreur du Skin Guru. Réessaie.',
+              buttons: [], createdAt: new Date().toISOString(), pending: false,
+            })
           }
           if (evt.type === 'done') statusText.value = ''
         } catch { /* ignore */ }

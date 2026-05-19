@@ -19,6 +19,7 @@ import { profileRouter } from './routes/profile'
 import { reportsRouter } from './routes/reports'
 import { evolutionRouter } from './routes/evolution'
 import { whatsappRouter } from './routes/whatsapp-webhook'
+import { importRouter } from './routes/import'
 import { startWeeklyReportCron } from './jobs/weekly-report'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { db } from './db/client'
@@ -51,6 +52,7 @@ app.use('/api/analytics', analyticsRouter)
 app.use('/api/profile', profileRouter)
 app.use('/api/reports', reportsRouter)
 app.use('/api/evolution', evolutionRouter)
+app.use('/api/import', importRouter)
 app.use('/webhook/whatsapp', whatsappRouter)
 
 // Servir les photos locales
